@@ -33,6 +33,18 @@ type Config struct {
 	// Optional; when empty the agent does not name a currency.
 	Currency string
 
+	// WhatsApp Cloud API. WhatsAppEnabled is true when any WHATSAPP_* value
+	// is set, in which case all of them are required.
+	WhatsAppEnabled       bool
+	WhatsAppAccessToken   string
+	WhatsAppPhoneNumberID string
+	WhatsAppAppSecret     string
+	WhatsAppVerifyToken   string
+	WhatsAppAPIVersion    string
+	// DefaultCountryCode (e.g. 233) turns local phone numbers into
+	// international form when matching WhatsApp senders to users.
+	DefaultCountryCode string
+
 	// Location is the business timezone used to interpret dates
 	// (BUSINESS_TIMEZONE, default Africa/Accra).
 	Location *time.Location
@@ -56,6 +68,25 @@ func Load() (*Config, error) {
 		AgentName:          getEnv("AGENT_NAME", "opk-whatsapp-ai"),
 		AgentLogLevel:      getEnv("AGENT_LOG_LEVEL", "info"),
 		Currency:           strings.ToUpper(getEnv("CURRENCY", "")),
+
+		WhatsAppAccessToken:   getEnv("WHATSAPP_ACCESS_TOKEN", ""),
+		WhatsAppPhoneNumberID: getEnv("WHATSAPP_PHONE_NUMBER_ID", ""),
+		WhatsAppAppSecret:     getEnv("WHATSAPP_APP_SECRET", ""),
+		WhatsAppVerifyToken:   getEnv("WHATSAPP_VERIFY_TOKEN", ""),
+		WhatsAppAPIVersion:    getEnv("WHATSAPP_API_VERSION", "v24.0"),
+		DefaultCountryCode:    strings.TrimPrefix(getEnv("DEFAULT_COUNTRY_CODE", "233"), "+"),
+	}
+
+	whatsApp := map[string]string{
+		"WHATSAPP_ACCESS_TOKEN":    cfg.WhatsAppAccessToken,
+		"WHATSAPP_PHONE_NUMBER_ID": cfg.WhatsAppPhoneNumberID,
+		"WHATSAPP_APP_SECRET":      cfg.WhatsAppAppSecret,
+		"WHATSAPP_VERIFY_TOKEN":    cfg.WhatsAppVerifyToken,
+	}
+	for _, v := range whatsApp {
+		if v != "" {
+			cfg.WhatsAppEnabled = true
+		}
 	}
 
 	required := map[string]string{
@@ -65,6 +96,12 @@ func Load() (*Config, error) {
 		"POCKETBASE_PASSWORD": cfg.PocketBasePassword,
 		"OPENROUTER_API_KEY":  cfg.OpenRouterAPIKey,
 		"OPENROUTER_MODEL":    cfg.OpenRouterModel,
+	}
+
+	if cfg.WhatsAppEnabled {
+		for k, v := range whatsApp {
+			required[k] = v
+		}
 	}
 
 	var missing []string

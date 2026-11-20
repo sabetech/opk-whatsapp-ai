@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -47,6 +48,33 @@ one they mean. Never invent business data — only report what tools return.
 If a tool returns an error, try to correct your query; if you still cannot
 answer, explain the limitation. Mention the date range you used when
 reporting figures. Be professional, clear and concise.`
+
+// whatsAppFormatting tells the model how to format replies for WhatsApp,
+// which does not render Markdown tables or headings.
+const whatsAppFormatting = `Format replies for WhatsApp:
+- Never use Markdown tables, headings (#) or links in [text](url) form.
+- Use *single asterisks* for bold, _underscores_ for italics and "- " for bullets.
+- Keep replies short and scannable on a phone; lead with the answer.
+- For lists of items, use one line per item, e.g. "- ABC MINI 330: 22 units (2,992)".`
+
+// callerPrompt describes the caller and channel, if known.
+func callerPrompt(c Caller) string {
+	var b strings.Builder
+	if c.Name != "" || c.Role != "" {
+		fmt.Fprintf(&b, "\n\nYou are talking to %s (role: %s).", orUnknown(c.Name), orUnknown(c.Role))
+	}
+	if c.Channel == "whatsapp" {
+		b.WriteString("\n\n" + whatsAppFormatting)
+	}
+	return b.String()
+}
+
+func orUnknown(s string) string {
+	if s == "" {
+		return "unknown"
+	}
+	return s
+}
 
 // buildSystemPrompt appends the currency rule and the current date so amounts
 // are labelled correctly and relative dates ("today", "this month") resolve.

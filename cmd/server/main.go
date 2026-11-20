@@ -13,6 +13,8 @@ import (
 	"opk-whatsapp-ai/internal/llm"
 	"opk-whatsapp-ai/internal/pocketbase"
 	"opk-whatsapp-ai/internal/tools"
+	"opk-whatsapp-ai/internal/users"
+	"opk-whatsapp-ai/internal/whatsapp"
 )
 
 func main() {
@@ -55,6 +57,19 @@ func main() {
 
 	handlers.NewHealthHandler(pbClient).RegisterRoutes(router)
 	handlers.NewChatHandler(aiAgent).RegisterRoutes(router, handlers.RequireAPIKey(cfg.ChatAPIKey))
+
+	if cfg.WhatsAppEnabled {
+		handlers.NewWhatsAppHandler(
+			whatsapp.NewClient(cfg.WhatsAppAccessToken, cfg.WhatsAppPhoneNumberID, cfg.WhatsAppAPIVersion),
+			users.NewDirectory(pbClient, cfg.DefaultCountryCode),
+			aiAgent,
+			cfg.WhatsAppVerifyToken,
+			cfg.WhatsAppAppSecret,
+		).RegisterRoutes(router)
+		log.Println("WhatsApp webhook enabled at /webhook/whatsapp")
+	} else {
+		log.Println("WhatsApp not configured; webhook disabled")
+	}
 
 	log.Printf("%s server starting on port %s", cfg.AgentName, cfg.Port)
 

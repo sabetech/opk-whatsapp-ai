@@ -32,11 +32,24 @@ func New(llmClient *llm.Client, registry *tools.Registry, loc *time.Location, cu
 	}
 }
 
+// Caller describes who is asking and through which channel.
+type Caller struct {
+	Name    string
+	Role    string
+	Channel string // e.g. "whatsapp"; empty for the HTTP API
+}
+
+// Run answers a message from the HTTP API.
 func (a *Agent) Run(ctx context.Context, userMessage string) (string, error) {
+	return a.RunForCaller(ctx, userMessage, Caller{})
+}
+
+// RunForCaller answers a message, tailoring the reply to the caller and channel.
+func (a *Agent) RunForCaller(ctx context.Context, userMessage string, caller Caller) (string, error) {
 	messages := []llm.Message{
 		{
 			Role:    "system",
-			Content: buildSystemPrompt(time.Now().In(a.loc), a.currency),
+			Content: buildSystemPrompt(time.Now().In(a.loc), a.currency) + callerPrompt(caller),
 		},
 		{
 			Role:    "user",

@@ -22,3 +22,13 @@ func TestBuildSystemPrompt(t *testing.T) {
 		t.Error("no-currency rule missing")
 	}
 }
+
+func TestCallerPrompt(t *testing.T) {
+	got := callerPrompt(Caller{Name: "Ama", Role: "sales_manager", Channel: "whatsapp"})
+	if !strings.Contains(got, "talking to Ama (role: sales_manager)") || !strings.Contains(got, "Never use Markdown tables") {
+		t.Errorf("callerPrompt = %q", got)
+	}
+	if callerPrompt(Caller{}) != "" {
+		t.Error("empty caller should add nothing")
+	}
+}
