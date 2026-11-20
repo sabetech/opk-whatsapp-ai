@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -27,6 +28,14 @@ type Config struct {
 
 	AgentName     string
 	AgentLogLevel string
+
+	// Currency is the currency code amounts are recorded in (CURRENCY, e.g. GHS).
+	// Optional; when empty the agent does not name a currency.
+	Currency string
+
+	// Location is the business timezone used to interpret dates
+	// (BUSINESS_TIMEZONE, default Africa/Accra).
+	Location *time.Location
 }
 
 // Load reads configuration from the environment (and .env if present) and
@@ -46,6 +55,7 @@ func Load() (*Config, error) {
 		OpenRouterModel:    getEnv("OPENROUTER_MODEL", ""),
 		AgentName:          getEnv("AGENT_NAME", "opk-whatsapp-ai"),
 		AgentLogLevel:      getEnv("AGENT_LOG_LEVEL", "info"),
+		Currency:           strings.ToUpper(getEnv("CURRENCY", "")),
 	}
 
 	required := map[string]string{
@@ -68,6 +78,13 @@ func Load() (*Config, error) {
 		sort.Strings(missing)
 		return nil, fmt.Errorf("missing required configuration: %s", strings.Join(missing, ", "))
 	}
+
+	tz := getEnv("BUSINESS_TIMEZONE", "Africa/Accra")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		return nil, fmt.Errorf("invalid BUSINESS_TIMEZONE %q: %w", tz, err)
+	}
+	cfg.Location = loc
 
 	return cfg, nil
 }

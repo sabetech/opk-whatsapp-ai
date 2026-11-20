@@ -236,6 +236,37 @@ func (c *Client) ListRecords(ctx context.Context, collection string, opts ListOp
 	return &result, nil
 }
 
+// ListAll pages through every record matching opts (ignoring Page/PerPage)
+// up to max records. The bool result reports whether results were truncated.
+func (c *Client) ListAll(ctx context.Context, collection string, opts ListOptions, max int) ([]map[string]any, bool, error) {
+	const perPage = 500
+
+	opts.PerPage = perPage
+	opts.SkipTotal = true
+	if opts.Sort == "" {
+		opts.Sort = "id" // stable ordering across pages
+	}
+
+	var all []map[string]any
+	for page := 1; ; page++ {
+		opts.Page = page
+
+		result, err := c.ListRecords(ctx, collection, opts)
+		if err != nil {
+			return nil, false, err
+		}
+
+		all = append(all, result.Items...)
+
+		if len(all) >= max {
+			return all[:max], true, nil
+		}
+		if len(result.Items) < perPage {
+			return all, false, nil
+		}
+	}
+}
+
 // CountRecords returns the number of records matching filter.
 func (c *Client) CountRecords(ctx context.Context, collection, filter string) (int, error) {
 	result, err := c.ListRecords(ctx, collection, ListOptions{

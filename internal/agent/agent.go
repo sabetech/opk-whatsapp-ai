@@ -4,23 +4,31 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"opk-whatsapp-ai/internal/llm"
 	"opk-whatsapp-ai/internal/tools"
 )
 
-const maxToolRounds = 5
+const maxToolRounds = 8
 const maxToolCallsPerRound = 5
 
 type Agent struct {
 	llmClient *llm.Client
 	registry  *tools.Registry
+	loc       *time.Location
+	currency  string
 }
 
-func New(llmClient *llm.Client, registry *tools.Registry) *Agent {
+func New(llmClient *llm.Client, registry *tools.Registry, loc *time.Location, currency string) *Agent {
+	if loc == nil {
+		loc = time.UTC
+	}
 	return &Agent{
 		llmClient: llmClient,
 		registry:  registry,
+		loc:       loc,
+		currency:  currency,
 	}
 }
 
@@ -28,7 +36,7 @@ func (a *Agent) Run(ctx context.Context, userMessage string) (string, error) {
 	messages := []llm.Message{
 		{
 			Role:    "system",
-			Content: SystemPrompt,
+			Content: buildSystemPrompt(time.Now().In(a.loc), a.currency),
 		},
 		{
 			Role:    "user",

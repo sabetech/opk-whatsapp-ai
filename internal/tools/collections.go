@@ -43,7 +43,7 @@ func NewListCollectionsTool(client *pocketbase.Client, access *CollectionAccess)
 
 				fields := make(map[string]string, len(col.Fields))
 				for _, f := range col.Fields {
-					if f.Type == "password" {
+					if f.Type == "password" || sensitiveFields[f.Name] {
 						continue
 					}
 					fields[f.Name] = f.Type

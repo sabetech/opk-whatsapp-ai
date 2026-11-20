@@ -9,9 +9,15 @@ import (
 
 var collectionNamePattern = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 
+// deniedCollections are never readable by the agent, even if allowlisted.
+var deniedCollections = map[string]bool{
+	"app_settings": true, // application configuration; may hold secrets
+}
+
 // CollectionAccess decides which PocketBase collections the agent may read.
-// System collections (names starting with "_", e.g. _superusers) are always
-// denied. If an allowlist is configured, only those collections are allowed.
+// System collections (names starting with "_", e.g. _superusers) and
+// deniedCollections are always denied. If an allowlist is configured, only
+// those collections are allowed.
 type CollectionAccess struct {
 	allowed map[string]bool
 }
@@ -28,7 +34,7 @@ func NewCollectionAccess(allowed []string) *CollectionAccess {
 }
 
 func (a *CollectionAccess) Allowed(name string) bool {
-	if !collectionNamePattern.MatchString(name) || strings.HasPrefix(name, "_") {
+	if !collectionNamePattern.MatchString(name) || strings.HasPrefix(name, "_") || deniedCollections[name] {
 		return false
 	}
 	if a.allowed == nil {

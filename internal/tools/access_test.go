@@ -17,6 +17,8 @@ func TestCollectionAccess(t *testing.T) {
 		{open, "../_superusers", false},
 		{open, "customers/records", false},
 		{open, "", false},
+		{open, "app_settings", false},
+		{NewCollectionAccess([]string{"app_settings"}), "app_settings", false},
 		{restricted, "customers", true},
 		{restricted, "inventory", false},
 		{restricted, "_superusers", false},

@@ -105,7 +105,7 @@ func NewSearchTool(client *pocketbase.Client, access *CollectionAccess) Tool {
 				"page":        result.Page,
 				"total_items": result.TotalItems,
 				"total_pages": result.TotalPages,
-				"items":       result.Items,
+				"items":       redact(result.Items),
 			}, nil
 		},
 	}

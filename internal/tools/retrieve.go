@@ -54,7 +54,11 @@ func NewRetrieveTool(client *pocketbase.Client, access *CollectionAccess) Tool {
 				return nil, fmt.Errorf("id is required")
 			}
 
-			return client.GetRecord(ctx, args.Collection, args.ID, args.Expand)
+			record, err := client.GetRecord(ctx, args.Collection, args.ID, args.Expand)
+			if err != nil {
+				return nil, err
+			}
+			return redact(record), nil
 		},
 	}
 }

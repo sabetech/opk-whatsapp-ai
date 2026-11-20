@@ -38,22 +38,17 @@ func main() {
 
 	// Register available tools.
 	access := tools.NewCollectionAccess(cfg.AllowedCollections)
+	env := tools.NewEnv(pbClient, access, cfg.Location)
 	registry := tools.NewRegistry()
 
-	for _, tool := range []tools.Tool{
-		tools.NewPocketBaseHealthTool(pbClient),
-		tools.NewListCollectionsTool(pbClient, access),
-		tools.NewCountTool(pbClient, access),
-		tools.NewSearchTool(pbClient, access),
-		tools.NewRetrieveTool(pbClient, access),
-	} {
+	for _, tool := range tools.All(env) {
 		if err := registry.Register(tool); err != nil {
 			log.Fatalf("Register tool: %v", err)
 		}
 	}
 
 	// Initialize agent.
-	aiAgent := agent.New(llmClient, registry)
+	aiAgent := agent.New(llmClient, registry, cfg.Location, cfg.Currency)
 
 	// Initialize Gin.
 	router := gin.Default()
