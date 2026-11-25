@@ -73,7 +73,7 @@ func main() {
 
 	log.Printf("%s server starting on port %s", cfg.AgentName, cfg.Port)
 
-	if err := router.Run(":" + cfg.Port); err != nil {
+	if err := router.Run("127.0.0.1:" + cfg.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
